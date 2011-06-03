@@ -31,9 +31,9 @@ jQuery.fn.springy = function(params) {
         return;
     }
     
-    var stiffness = params.stiffness || 400.0;
-    var repulsion = params.repulsion || 400.0;
-    var damping = params.damping || 0.5;
+    var stiffness = params.stiffness || 500.0;
+    var repulsion = params.repulsion || 500.0;
+    var damping = params.damping || .5;
 
 	var canvas = this[0];
 	var ctx = canvas.getContext("2d");
@@ -111,14 +111,14 @@ jQuery.fn.springy = function(params) {
 	Node.prototype.getWidth = function() {
 		ctx.save();
 		var text = typeof(this.data.label) !== 'undefined' ? this.data.label : this.id;
-		ctx.font = "16px Verdana, sans-serif";
-		var width = ctx.measureText(text).width + 10;
+		ctx.font = "13px Verdana, sans-serif";
+		var width = ctx.measureText(text).width + 60;
 		ctx.restore();
 		return width;
 	};
 
 	Node.prototype.getHeight = function() {
-		return 20;
+		return 30;
 	};
 
 	var renderer = new Renderer(1, layout,
@@ -175,9 +175,18 @@ jQuery.fn.springy = function(params) {
 
 			var weight = typeof(edge.data.weight) !== 'undefined' ? edge.data.weight : 1.0;
 
-			ctx.lineWidth = Math.max(weight *  2, 0.1);
-			arrowWidth = 1 + ctx.lineWidth;
-			arrowLength = 8;
+			if (selected !== null && (selected.node === edge.source || selected.node === edge.target))
+			{
+				ctx.lineWidth = 5;
+				arrowWidth = 7;
+				arrowLength = 10;
+			}
+			else
+			{
+				ctx.lineWidth = Math.max(weight *  2, 0.1);
+				arrowWidth = 1 + ctx.lineWidth;
+				arrowLength = 8;
+			}
 
 			var directional = typeof(edge.data.directional) !== 'undefined' ? edge.data.directional : true;
 
@@ -218,41 +227,63 @@ jQuery.fn.springy = function(params) {
 		},
 		function drawNode(node, p)
 		{
+			ctx.fillStyle = typeof(node.data.fill) !== 'undefined' ? node.data.fill : "#666";
+	 
 			var s = toScreen(p);
-
-			ctx.save();
 
 			var boxWidth = node.getWidth();
 			var boxHeight = node.getHeight();
 
-			// fill background
-			ctx.clearRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
-
-			// fill background
-			if (selected !== null && nearest.node !== null && selected.node.id === node.id)
+			// box edge
+			if (selected !== null && selected.node === node)
 			{
-				ctx.fillStyle = "#FFFFE0";
+				ctx.strokeStyle = "#000000";
+				ctx.lineWidth = 4;
 			}
-			else if (nearest !== null && nearest.node !== null && nearest.node.id === node.id)
+			else if (nearest !== null && nearest.node === node)
 			{
-				ctx.fillStyle = "#EEEEEE";
+				ctx.strokeStyle = "#FCD535";
+				ctx.lineWidth = 3;
 			}
 			else
 			{
-				ctx.fillStyle = "#FFFFFF";
+				ctx.strokeStyle = "#000000";
+				ctx.lineWidth = 1.5;
 			}
-
-			ctx.fillRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
-
-			ctx.textAlign = "left";
-			ctx.textBaseline = "top";
-			ctx.font = "16px Verdana, sans-serif";
-			ctx.fillStyle = "#000000";
-			ctx.font = "16px Verdana, sans-serif";
-			var text = typeof(node.data.label) !== 'undefined' ? node.data.label : node.id;
-			ctx.fillText(text, s.x - boxWidth/2 + 5, s.y - 8);
-
+	 
+			ctx.save();
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = '#000000';
+			ctx.fillRect(s.x - boxWidth/2.0, s.y - boxHeight/2.0, boxWidth, boxHeight);
 			ctx.restore();
+	 
+			ctx.strokeRect(s.x - boxWidth/2.0, s.y - boxHeight/2.0, boxWidth, boxHeight);
+	 
+	 
+			// clip drawing within rectangle
+			ctx.save()
+			ctx.beginPath();
+			ctx.rect(s.x - boxWidth/2.0+2, s.y - boxHeight/2.0+2, boxWidth-4, boxHeight-4);
+			ctx.clip();
+	 
+			// render label
+			if (typeof(node.data.label) !== 'undefined')
+			{
+				ctx.save();
+				ctx.textAlign = "left";
+				ctx.textBaseline = "top";
+				ctx.font = "13px Verdana, sans-serif";
+				ctx.shadowBlur = 0;
+				ctx.shadowColor = '#000';
+				ctx.shadowOffsetX = 1;
+				ctx.shadowOffsetY = 1;
+				ctx.fillStyle = "#FFF";
+				ctx.fillText(node.data.label, s.x - boxWidth/2.0 + 28, s.y - boxHeight/2.0 + 7);
+				ctx.restore();
+			}
+	 
+			ctx.restore()
+	 
 		}
 	);
 
